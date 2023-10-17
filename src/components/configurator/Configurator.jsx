@@ -15,6 +15,7 @@ const STYLE = "style"; //text URL 👍
 
 // funciones
 const TTS = "tts"; // Checkbox (activo po defecto) 👍
+const REVERSE_STYLE = "reverse_style"; // Checkbox (desactivado por defecto) 👍
 // Los parámetros TTS deberían de ser obtenidos del navegador 👍
 const TTS_ACCENT = "tts_accent"; // listado desplegable 👍
 const TTS_INDEX = "tts_index"; // Listado desplegable (indices dependiendo del accento)
@@ -24,11 +25,12 @@ const PATO_BOT = "pato_bot"; // bool (activo por defecto) 👍
 const HTMLI = "htmli"; // 👍 Checkbox (desactivado y avisando que es experimental)
 const VALID = "_valid";
 
-const itemStyle = "flex flex-col m-1";
-const itemStyleCheckbox = "flex m-1";
-const labelStyle = "mr-2 my-1 text-base";
+const itemStyle = "flex flex-col";
+const labelStyle = "text-sm font-medium text-gray-300 mb-1";
 const input =
-  "px-2 py-1 rounded-lg bg-zinc-800 text-zinc-100 border border-zinc-700 hover:border-zinc-400 focus:border-amber-300 transition-all";
+  "mt-1 block p-2 bg-zinc-800 text-zinc-100 border border-zinc-700 rounded-lg transition-all duration-100 focus:outline focus:outline-offset-2 focus:outline-2 focus:outline-blue-500";
+const toggleStyle =
+  "w-9 h-5 peer-focus:outline peer-focus:outline-2 peer-focus:outline-blue-500 rounded-full peer bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all border-gray-600 peer-checked:bg-blue-600";
 
 const dataInitialState = {};
 dataInitialState[CHANNEL] = "chrisvdev"; // Validar Usuario si
@@ -36,6 +38,7 @@ dataInitialState[DEFAULT_AVATAR] = ""; // URL si
 dataInitialState[`${DEFAULT_AVATAR}${VALID}`] = true; // URL si
 dataInitialState[STYLE] = ""; // Validar URL si
 dataInitialState[`${STYLE}${VALID}`] = true; // Validar URL si
+dataInitialState[REVERSE_STYLE] = false; // check no
 dataInitialState[TTS] = true; // check si
 dataInitialState[TTS_ACCENT] = ""; // Auto
 dataInitialState[TTS_INDEX] = ""; // Auto
@@ -46,7 +49,7 @@ dataInitialState[HTMLI] = false; // check si
 
 const typeUser = [CHANNEL, BOTS];
 const typeUsers = [BOTS];
-const typeCheck = [TTS, RENDER, PATO_BOT, HTMLI];
+const typeCheck = [TTS, RENDER, PATO_BOT, HTMLI, REVERSE_STYLE];
 const typeURL = [DEFAULT_AVATAR, STYLE];
 const typeData = [TTS_ACCENT, TTS_INDEX];
 
@@ -162,6 +165,9 @@ export default function Configurator() {
           e.preventDefault();
           console.log("Click");
           if (!copied) {
+            data[REVERSE_STYLE]
+              ? (data.style = data.style.replace(/\.css$/, "-reverse.css"))
+              : (data.style = data.style.replace(/-reverse\.css$/, ".css"));
             navigator.clipboard
               .writeText(dataToURL(data))
               .then(() => {
@@ -175,7 +181,7 @@ export default function Configurator() {
               });
           }
         }}
-        className="flex flex-col items-start px-4 py-2 border border-zinc-400 rounded-lg"
+        className="flex flex-col space-y-4 p-4 border border-gray-700 rounded-lg"
       >
         <div className={itemStyle}>
           <label className={labelStyle}>Channel</label>
@@ -187,9 +193,9 @@ export default function Configurator() {
             onInput={makeInputHandler(CHANNEL)}
           />
         </div>
+
         <div className={itemStyle}>
           <label className={labelStyle}>Custom CSS Style</label>
-          {/* ***************************************************************** */}
           <select
             className={`${input} my-1`}
             onInput={(e) => {
@@ -205,7 +211,14 @@ export default function Configurator() {
           >
             <option value="">Custom...</option>
             {skins.map(({ title, url }, i) => (
-              <option key={`skin_${i}`} value={url}>
+              <option
+                key={`skin_${i}`}
+                value={
+                  data[REVERSE_STYLE]
+                    ? url.replace(/\.css$/, "-reverse.css")
+                    : url
+                }
+              >
                 {title}
               </option>
             ))}
@@ -223,6 +236,21 @@ export default function Configurator() {
         {data[`${STYLE}${VALID}`] || (
           <p className="text-red-600">Is not a valid URL</p>
         )}
+
+        <label class="relative inline-flex items-center mb-5 cursor-pointer">
+          <input
+            checked={data[REVERSE_STYLE]}
+            type="checkbox"
+            name={REVERSE_STYLE}
+            onInput={makeInputHandler(REVERSE_STYLE)}
+            class="sr-only peer"
+          />
+          <div class={toggleStyle}></div>
+          <span class="ml-3 text-sm font-medium text-gray-300">
+            Reverse Style
+          </span>
+        </label>
+
         <div className={itemStyle}>
           <label className={labelStyle}>Default Avatar</label>
           <input
@@ -236,15 +264,19 @@ export default function Configurator() {
         {data[`${DEFAULT_AVATAR}${VALID}`] || (
           <p className="text-red-600">Is not a valid URL</p>
         )}
-        <div className={itemStyleCheckbox}>
-          <label className={labelStyle}>TTS</label>
+
+        <label class="relative inline-flex items-center mb-5 cursor-pointer">
           <input
             checked={data[TTS]}
             type="checkbox"
             name={TTS}
             onInput={makeInputHandler(TTS)}
+            class="sr-only peer"
           />
-        </div>
+          <div class={toggleStyle}></div>
+          <span class="ml-3 text-sm font-medium text-gray-300">TTS</span>
+        </label>
+
         <div className={itemStyle}>
           {/* Si esta desactivado se podrían anular los 2 siguientes inputs */}
           <label className={labelStyle}>TTS Accent</label>
@@ -274,7 +306,7 @@ export default function Configurator() {
           </select>
         </div>
         <button
-          className="my-2 px-2 py-1 rounded-lg bg-zinc-800 text-zinc-100 border border-zinc-700 hover:border-zinc-400 focus:border-amber-300 transition-all"
+          className="w-fit text-white font-medium rounded-lg text-sm px-5 py-2 bg-blue-600 transition-all duration-100 focus:outline focus:outline-offset-2 focus:outline-2 focus:outline-blue-500"
           type="button"
           onClick={(e) => {
             e.preventDefault();
@@ -283,15 +315,18 @@ export default function Configurator() {
         >
           Test TTS
         </button>
-        <div className={itemStyleCheckbox}>
-          <label className={labelStyle}>Render</label>
+
+        <label class="relative inline-flex items-center mb-5 cursor-pointer">
           <input
-            checked={data[RENDER]}
             type="checkbox"
             name={RENDER}
             onInput={makeInputHandler(RENDER)}
+            class="sr-only peer"
           />
-        </div>
+          <div class={toggleStyle}></div>
+          <span class="ml-3 text-sm font-medium text-gray-300">Render</span>
+        </label>
+
         <div className={itemStyle}>
           <label className={labelStyle}>Bots</label>
           <input
@@ -305,15 +340,21 @@ export default function Configurator() {
             Usernames separated by "," like "bot1,bot2,etc"
           </p>
         </div>
-        <div className={itemStyleCheckbox}>
-          <label className={labelStyle}>PatoBot compatibility</label>
+
+        <label class="relative inline-flex items-center mb-5 cursor-pointer">
           <input
             type="checkbox"
             checked={data[PATO_BOT]}
             name={PATO_BOT}
             onInput={makeInputHandler(PATO_BOT)}
+            class="sr-only peer"
           />
-        </div>
+          <div class={toggleStyle}></div>
+          <span class="ml-3 text-sm font-medium text-gray-300">
+            PatoBot compatibility
+          </span>
+        </label>
+
         <p className="italic text-xs text-zinc-400 hover:text-zinc-100 transition-all cursor-pointer">
           (
           <a href="https://elpatobot.com/">
@@ -321,30 +362,34 @@ export default function Configurator() {
           </a>
           )
         </p>
-        <div className={itemStyleCheckbox}>
-          <label className={labelStyle}>HTML Injection</label>
+
+        <label class="relative inline-flex items-center mb-5 cursor-pointer">
           <input
             type="checkbox"
             checked={data[HTMLI]}
             name={HTMLI}
             onInput={makeInputHandler(HTMLI)}
+            class="sr-only peer"
           />
-        </div>
+          <div class={toggleStyle}></div>
+          <span class="ml-3 text-sm font-medium text-gray-300">
+            HTML Injection
+          </span>
+        </label>
+
         <p className="italic text-xs text-zinc-400">
           (Experimental, Use on your own risk)
         </p>
         <div className="flex justify-center w-full">
           {readyToGenerate ? (
             <button
-              className={`m-4 px-2 py-1 rounded-lg bg-zinc-800 text-zinc-100 border border-zinc-700 hover:border-zinc-400 transition-all${
-                copied ? "scale-105 font-semibold " : ""
-              }`}
+              className="w-full text-white font-medium rounded-lg text-sm px-5 py-2 bg-blue-600 transition-all duration-100 focus:outline focus:outline-offset-2 focus:outline-2 focus:outline-blue-500"
               type="submit"
             >
               {!copied ? "Generate URL" : "Copied to the clipboard"}
             </button>
           ) : (
-            <p className="m-4 px-2 py-1 text-red-600">
+            <p className="m-4 px-2 py-1 text-red-400 font-medium">
               There are some invalid parameters...
             </p>
           )}
